@@ -1,0 +1,8 @@
+flake8
+flake8-import-order
+mock
+requests-mock
+coverage
+asynctest
+nose2
+safety

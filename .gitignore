@@ -1,0 +1,8 @@
+__pycache__
+*.egg-info
+.vscode
+.tox
+venv
+cover
+.coverage*
+coverage.xml
