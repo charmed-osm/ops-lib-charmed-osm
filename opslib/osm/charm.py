@@ -23,6 +23,8 @@
 __all__ = ["CharmedOsmBase", "RelationsMissing"]
 
 
+import hashlib
+import json
 import logging
 from typing import Any, Dict, NoReturn
 
@@ -97,6 +99,13 @@ class CharmedOsmBase(CharmBase):
             self.unit.status = BlockedStatus(e)
 
     def _set_pod_spec(self, pod_spec: Dict[str, Any]) -> NoReturn:
-        if self.state.pod_spec != pod_spec:
+        pod_spec_hash = _hash_from_dict(pod_spec)
+        if self.state.pod_spec != pod_spec_hash:
             self.model.pod.set_spec(pod_spec)
-            self.state.pod_spec = pod_spec
+            self.state.pod_spec = pod_spec_hash
+
+
+def _hash_from_dict(dict: Dict[str, Any]) -> str:
+    dict_str = json.dumps(dict, sort_keys=True)
+    result = hashlib.md5(dict_str.encode())
+    return result.hexdigest()
