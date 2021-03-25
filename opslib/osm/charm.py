@@ -36,7 +36,6 @@ from ops.model import (
     BlockedStatus,
     MaintenanceStatus,
     ModelError,
-    WaitingStatus,
 )
 
 from .validator import ValidationError
@@ -48,7 +47,7 @@ class RelationsMissing(Exception):
     def __init__(self, missing_relations: list):
         self.message = ""
         if missing_relations and isinstance(missing_relations, list):
-            self.message += f'Waiting for {", ".join(missing_relations)} relation'
+            self.message += f'Need {", ".join(missing_relations)} relation'
             if "," in self.message:
                 self.message += "s"
 
@@ -91,7 +90,7 @@ class CharmedOsmBase(CharmBase):
             self.unit.status = BlockedStatus(str(e))
         except RelationsMissing as e:
             logger.error(f"Relation missing error: {e.message}")
-            self.unit.status = WaitingStatus(e.message)
+            self.unit.status = BlockedStatus(e.message)
         except ModelError as e:
             self.unit.status = BlockedStatus(str(e))
         except Exception as e:
