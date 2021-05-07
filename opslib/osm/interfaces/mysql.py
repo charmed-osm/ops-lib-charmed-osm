@@ -30,3 +30,40 @@ class MysqlClient(BaseRelationClient):
     @property
     def root_password(self):
         return self.get_data_from_unit("root_password")
+
+    @property
+    def database(self):
+        return self.get_data_from_unit("database")
+
+    def get_root_uri(self, database: str):
+        """
+        Get the URI for the mysql connection with the root user credentials
+
+        :param: database: Database name
+
+        :return: A string with the following format:
+                    mysql://root:<root_password>@<mysql_host>:<mysql_port>/<database>
+        """
+        return "mysql://root:{}@{}:{}/{}".format(
+            self.root_password,
+            self.host,
+            self.port,
+            database
+        )
+
+    def get_uri(self):
+        """
+        Get the URI for the mysql connection with the standard user credentials
+
+        :param: database: Database name
+
+        :return: A string with the following format:
+                    mysql://<user>:<password>@<mysql_host>:<mysql_port>/<database>
+        """
+        return "mysql://{}:{}@{}:{}/{}".format(
+            self.user,
+            self.password,
+            self.host,
+            self.port,
+            self.database
+        )
