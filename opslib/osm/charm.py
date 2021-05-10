@@ -95,7 +95,7 @@ class CharmedOsmBase(CharmBase):
             self.unit.status = BlockedStatus(str(e))
         except Exception as e:
             logger.error(f"Unknown exception: {e}")
-            self.unit.status = BlockedStatus(e)
+            self.unit.status = BlockedStatus(e.message)
 
     def _set_pod_spec(self, pod_spec: Dict[str, Any]) -> NoReturn:
         pod_spec_hash = _hash_from_dict(pod_spec)
