@@ -22,6 +22,7 @@ charms at https://git.launchpad.net/canonical-osm
 """
 
 from typing import NoReturn
+
 import ops.charm
 import ops.framework
 import ops.model
@@ -86,6 +87,7 @@ class PrometheusScrapeTarget(ops.framework.Object):
                 relation.data[self.framework.model.app]["metrics_path"] = metrics_path
                 relation.data[self.framework.model.app]["scrape_interval"] = scrape_interval
                 relation.data[self.framework.model.app]["scrape_timeout"] = scrape_timeout
+
 
 class PrometheusScrapeServer(BaseRelationClient):
     """Requires side of a Prometheus Scrape Endpoint"""
