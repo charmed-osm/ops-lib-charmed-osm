@@ -71,7 +71,7 @@ class CharmedOsmBase(CharmBase):
         self.framework.observe(self.on.leader_elected, self.configure_pod)
 
     def build_pod_spec(self, image_info):
-        raise NotImplementedError()
+        raise NotImplementedError("build_pod_spec is not implemented")
 
     def configure_pod(self, _=None) -> NoReturn:
         """Assemble the pod spec and apply it, if possible."""
