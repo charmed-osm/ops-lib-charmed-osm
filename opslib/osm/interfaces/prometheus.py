@@ -78,21 +78,31 @@ class PrometheusScrapeTarget(ops.framework.Object):
         port: str,
         metrics_path: str,
         scrape_interval: str,
-        scrape_timeout: str
+        scrape_timeout: str,
     ) -> NoReturn:
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
                 relation.data[self.framework.model.app]["hostname"] = hostname
                 relation.data[self.framework.model.app]["port"] = port
                 relation.data[self.framework.model.app]["metrics_path"] = metrics_path
-                relation.data[self.framework.model.app]["scrape_interval"] = scrape_interval
-                relation.data[self.framework.model.app]["scrape_timeout"] = scrape_timeout
+                relation.data[self.framework.model.app][
+                    "scrape_interval"
+                ] = scrape_interval
+                relation.data[self.framework.model.app][
+                    "scrape_timeout"
+                ] = scrape_timeout
 
 
 class PrometheusScrapeServer(BaseRelationClient):
     """Requires side of a Prometheus Scrape Endpoint"""
 
-    mandatory_fields = ["hostname", "port", "metrics_path", "scrape_interval", "scrape_timeout"]
+    mandatory_fields = [
+        "hostname",
+        "port",
+        "metrics_path",
+        "scrape_interval",
+        "scrape_timeout",
+    ]
 
     def __init__(self, charm: ops.charm.CharmBase, relation_name: str):
         super().__init__(charm, relation_name, self.mandatory_fields)

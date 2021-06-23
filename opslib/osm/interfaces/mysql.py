@@ -45,10 +45,7 @@ class MysqlClient(BaseRelationClient):
                     mysql://root:<root_password>@<mysql_host>:<mysql_port>/<database>
         """
         return "mysql://root:{}@{}:{}/{}".format(
-            self.root_password,
-            self.host,
-            self.port,
-            database
+            self.root_password, self.host, self.port, database
         )
 
     def get_uri(self):
@@ -61,9 +58,5 @@ class MysqlClient(BaseRelationClient):
                     mysql://<user>:<password>@<mysql_host>:<mysql_port>/<database>
         """
         return "mysql://{}:{}@{}:{}/{}".format(
-            self.user,
-            self.password,
-            self.host,
-            self.port,
-            self.database
+            self.user, self.password, self.host, self.port, self.database
         )
