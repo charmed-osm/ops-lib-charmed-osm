@@ -75,11 +75,11 @@ sleep infinity"""
 
 class RelationsMissing(Exception):
     def __init__(self, missing_relations: list):
-        self.message = ""
-        if missing_relations and isinstance(missing_relations, list):
-            self.message += f'Need {", ".join(missing_relations)} relation'
-            if "," in self.message:
-                self.message += "s"
+        if not missing_relations or not isinstance(missing_relations, list):
+            raise Exception("missing_relations should be a non-empty list")
+        self.message = f'Need {", ".join(missing_relations)} relation'
+        if "," in self.message:
+            self.message += "s"
 
 
 class CharmedOsmBase(CharmBase):

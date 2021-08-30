@@ -9,7 +9,7 @@ class BaseRelationClient(ops.framework.Object):
         self,
         charm: ops.charm.CharmBase,
         relation_name: str,
-        mandatory_fields: list,
+        mandatory_fields: list = [],
     ):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
