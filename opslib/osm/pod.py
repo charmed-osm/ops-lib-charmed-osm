@@ -109,12 +109,20 @@ class ContainerV3Builder:
         self.name = name
         self.image_info = image_info
         self.image_pull_policy = image_pull_policy
+        self._security_context = {
+            "runAsNonRoot": True,
+            "privileged": False,
+        }
         self._readiness_probe = {}
         self._liveness_probe = {}
         self._volume_config = []
         self._ports = []
         self._envs = {}
         self._command = None
+
+    @property
+    def security_context(self):
+        return self._security_context
 
     @property
     def readiness_probe(self):
@@ -154,6 +162,14 @@ class ContainerV3Builder:
 
     def add_command(self, command):
         self._command = command
+
+    def update_security_context(self, run_as_non_root: bool = True, privileged: bool = False):
+        self._security_context.update(
+            {
+                "runAsNonRoot": run_as_non_root,
+                "privileged": privileged,
+            }
+        )
 
     def add_http_readiness_probe(
         self,
@@ -269,6 +285,8 @@ class ContainerV3Builder:
         }
         if self.command:
             container["command"] = self.command
+        if self.security_context:
+            container["kubernetes"]["securityContext"] = self.security_context
         if self.readiness_probe:
             container["kubernetes"]["readinessProbe"] = self.readiness_probe
         if self.liveness_probe:
@@ -281,7 +299,10 @@ class PodSpecV3Builder:
         self._init_containers = []
         self._containers = []
         self._ingress_resources = []
-        self._security_context = {}
+        self._security_context = {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+        }
         self._secrets = []
 
     @property
@@ -325,6 +346,12 @@ class PodSpecV3Builder:
 
     def add_ingress_resource(self, ingress_resource):
         self._ingress_resources.append(ingress_resource)
+
+    def set_security_context_run_as_user(self, user_id: int):
+        self._security_context.update({"runAsUser": user_id})
+
+    def set_security_context_run_as_group(self, group_id: int):
+        self._security_context.update({"runAsGroup": group_id})
 
     def set_security_context_fs_group(self, fs_group: int):
         self._security_context.update({"fsGroup": fs_group})

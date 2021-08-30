@@ -81,6 +81,10 @@ class TestPodSpecBuilder(unittest.TestCase):
                             }
                         ],
                         "kubernetes": {
+                            "securityContext": {
+                                "runAsNonRoot": True,
+                                "privileged": False,
+                            },
                             "readinessProbe": {
                                 "httpGet": {"path": "/-/ready", "port": 9090},
                                 "initialDelaySeconds": 0,
@@ -102,7 +106,12 @@ class TestPodSpecBuilder(unittest.TestCase):
                     }
                 ],
                 "kubernetesResources": {
-                    "pod": {"securityContext": {}},
+                    "pod": {
+                        "securityContext": {
+                            "runAsUser": 1000,
+                            "runAsGroup": 1000,
+                        },
+                    },
                     "ingressResources": [
                         {
                             "name": "prometheus-ingress",
