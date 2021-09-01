@@ -47,12 +47,10 @@ setuptools.setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/davigar15/ops-lib-osm",
-    packages=["opslib.osm", "opslib.osm.interfaces"],
+    packages=["opslib.osm", "opslib.osm.config", "opslib.osm.interfaces"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent",
@@ -62,7 +60,7 @@ setuptools.setup(
         "Juju": "https://juju.is/",
         "Juju Operator Framework": "https://pypi.org/project/ops/",
     },
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=install_requires,
     dependency_links=dependency_links,
 )

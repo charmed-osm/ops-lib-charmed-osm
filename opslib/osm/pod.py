@@ -28,6 +28,9 @@ __all__ = [
 ]
 
 
+from typing import Dict
+
+
 class IngressResourceV3Builder:
     def __init__(self, name, annotations):
         self.name = name
@@ -279,6 +282,7 @@ class PodSpecV3Builder:
         self._containers = []
         self._ingress_resources = []
         self._security_context = {}
+        self._secrets = []
 
     @property
     def containers(self):
@@ -297,6 +301,10 @@ class PodSpecV3Builder:
         return self._security_context
 
     @property
+    def secrets(self):
+        return self._secrets
+
+    @property
     def pod_spec(self):
         return {
             "version": 3,
@@ -305,6 +313,7 @@ class PodSpecV3Builder:
             "kubernetesResources": {
                 "ingressResources": self.ingress_resources,
                 "pod": {"securityContext": self.security_context},
+                "secrets": self.secrets,
             },
         }
 
@@ -319,6 +328,29 @@ class PodSpecV3Builder:
 
     def set_security_context_fs_group(self, fs_group: int):
         self._security_context.update({"fsGroup": fs_group})
+
+    def add_secret(
+        self, name: str, content: Dict, base64_encoded: bool = False, type="Opaque"
+    ):
+        """
+        Add a secret to the Pod
+
+        :param: name: Name of the secret
+        :param: content: Dictionary with the content of the secret
+        :base64_encoded: a bool to indicate if the content for the secret is base64 ncoded or not.
+                         If true, then "data" will be used in the secret, if false, "stringData"
+                         will be used
+        :param: data_type: Type of the
+        :param: type: Type of secret
+                      ref: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+        """
+        self._secrets.append(
+            {
+                "name": name,
+                "type": type,
+                "data" if base64_encoded else "stringData": content,
+            }
+        )
 
     def build(self):
         return self.pod_spec
