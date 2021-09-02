@@ -48,6 +48,7 @@ class TestPodSpecBuilder(unittest.TestCase):
         ingress_resource = ingress_resource_builder.build()
         pod_spec_builder = PodSpecV3Builder()
         pod_spec_builder.add_container(container)
+        pod_spec_builder.add_secret("secret-name", {"key": "value"})
         pod_spec_builder.add_ingress_resource(ingress_resource)
         self.assertEqual(
             pod_spec_builder.build(),
@@ -133,7 +134,14 @@ class TestPodSpecBuilder(unittest.TestCase):
                                 ],
                             },
                         }
-                    ]
+                    ],
+                    "secrets": [
+                        {
+                            "name": "secret-name",
+                            "type": "Opaque",
+                            "stringData": {"key": "value"},
+                        }
+                    ],
                 },
             },
         )

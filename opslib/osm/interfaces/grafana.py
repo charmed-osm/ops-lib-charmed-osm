@@ -65,3 +65,21 @@ class GrafanaDashboardServer(BaseRelationClient):
     @property
     def dashboard(self):
         return self.get_data_from_app("dashboard")
+
+
+class GrafanaCluster(BaseRelationClient):
+    """Peer relation for a Grafana cluster"""
+
+    def __init__(self, charm: ops.charm.CharmBase, relation_name: str):
+        super().__init__(charm, relation_name)
+
+    def set_initial_password(self, password: str):
+        if self.framework.model.unit.is_leader():
+            self.relation.data[self.framework.model.app][
+                "admin_initial_password"
+            ] = str(password)
+
+    @property
+    def admin_initial_password(self) -> int:
+        """Return grafana admin password in the cluster"""
+        return self.get_data_from_app("admin_initial_password")

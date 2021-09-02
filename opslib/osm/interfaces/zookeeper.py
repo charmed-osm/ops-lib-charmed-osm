@@ -15,13 +15,15 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+import logging
+
+
 import ops.charm
 import ops.framework
 import ops.model
 
 from .common import BaseRelationClient
 
-import logging
 
 logger = logging.getLogger(__name__)
 

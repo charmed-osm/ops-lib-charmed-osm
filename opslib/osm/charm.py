@@ -42,6 +42,7 @@ from ops.model import (
 )
 
 
+from .config.mysql import MysqlModel
 from .validator import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,7 @@ class CharmedOsmBase(CharmBase):
         debug_mode_config_key=None,
         debug_pubkey_config_key=None,
         vscode_workspace: Dict = {},
+        mysql_uri: bool = False,
     ) -> NoReturn:
         """
         CharmedOsmBase Charm constructor
@@ -113,11 +115,22 @@ class CharmedOsmBase(CharmBase):
         self.debug_mode_config_key = debug_mode_config_key
         self.debug_pubkey_config_key = debug_pubkey_config_key
         self.vscode_workspace = vscode_workspace
+        self.mysql_uri = mysql_uri
+
         # Registering regular events
         self.framework.observe(self.on.config_changed, self.configure_pod)
         self.framework.observe(self.on.leader_elected, self.configure_pod)
 
-    def build_pod_spec(self, image_info):
+    def build_pod_spec(self, image_info: Dict, **kwargs):
+        """
+        Method to be implemented by the charm to build the pod spec
+
+        :params: image_info: Image info details
+        :params: kwargs:
+                    mysql_config (opslib.osm.config.mysql.MysqlModel):
+                        Mysql config object. Will be included if the charm has been initialized
+                        with mysql_uri=True.
+        """
         raise NotImplementedError("build_pod_spec is not implemented")
 
     def _debug(self, pod_spec: Dict) -> NoReturn:
@@ -173,13 +186,21 @@ class CharmedOsmBase(CharmBase):
                 raise Exception("debug_pubkey config is not set")
             self._debug(pod_spec)
 
+    def _get_build_pod_spec_kwargs(self):
+        """Get kwargs for the build_pod_spec function"""
+        kwargs = {}
+        if self.mysql_uri:
+            kwargs["mysql_config"] = MysqlModel(**self.config)
+        return kwargs
+
     def configure_pod(self, _=None) -> NoReturn:
         """Assemble the pod spec and apply it, if possible."""
         try:
             if self.unit.is_leader():
                 self.unit.status = MaintenanceStatus("Assembling pod spec")
                 image_info = self.image.fetch()
-                pod_spec = self.build_pod_spec(image_info)
+                kwargs = self._get_build_pod_spec_kwargs()
+                pod_spec = self.build_pod_spec(image_info, **kwargs)
                 self._debug_if_needed(pod_spec)
                 self._set_pod_spec(pod_spec)
 
