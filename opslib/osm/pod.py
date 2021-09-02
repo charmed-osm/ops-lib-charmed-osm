@@ -281,12 +281,12 @@ class ContainerV3Builder:
             "ports": self.ports,
             "envConfig": self.env_config,
             "volumeConfig": self.volume_config,
-            "kubernetes": {},
+            "kubernetes": {
+                "securityContext": self.security_context,
+            },
         }
         if self.command:
             container["command"] = self.command
-        if self.security_context:
-            container["kubernetes"]["securityContext"] = self.security_context
         if self.readiness_probe:
             container["kubernetes"]["readinessProbe"] = self.readiness_probe
         if self.liveness_probe:
