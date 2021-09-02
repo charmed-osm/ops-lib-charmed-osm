@@ -302,6 +302,7 @@ class PodSpecV3Builder:
         self._security_context = {
             "runAsUser": 1000,
             "runAsGroup": 1000,
+            "fsGroup": 1000,
         }
         self._secrets = []
 
