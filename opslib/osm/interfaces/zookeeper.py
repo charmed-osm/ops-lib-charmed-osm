@@ -69,6 +69,8 @@ class ZookeeperCluster(BaseRelationClient):
 
     @property
     def zookeeper_uri(self):
+        if self.num_units == 1:
+            return f"{self.app_name}-0.{self.k8s_service_name}:{self.port}"
         return self.get_data_from_app("zookeeper_uri")
 
     def _update_zookeeper_uri(self, event):
