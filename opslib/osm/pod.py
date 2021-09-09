@@ -28,7 +28,10 @@ __all__ = [
 ]
 
 
-from typing import Dict
+from typing import Any, Dict, List, NoReturn, Set
+
+
+from .utils import find_in_list_with_key, hash_from_dict
 
 
 class IngressResourceV3Builder:
@@ -94,8 +97,8 @@ class FilesV3Builder:
     def files(self):
         return self._files
 
-    def add_file(self, path: str, content: str, mode: int = None):
-        file_spec = {"path": path, "content": content}
+    def add_file(self, path: str, content: str, mode: int = None, secret: bool = False):
+        file_spec = {"path": path, "content" if not secret else "key": content}
         if mode:
             file_spec.update({"mode": mode})
         self._files.append(file_spec)
@@ -151,14 +154,16 @@ class ContainerV3Builder:
     def add_port(self, name, port, protocol="TCP"):
         self._ports.append({"name": name, "containerPort": port, "protocol": protocol})
 
-    def add_volume_config(self, name, mount_path, files):
-        self._volume_config.append(
-            {
-                "name": name,
-                "mountPath": mount_path,
-                "files": files,
-            }
-        )
+    def add_volume_config(self, name, mount_path, files, secret_name: str = None):
+        volume_config = {
+            "name": name,
+            "mountPath": mount_path,
+        }
+        if secret_name:
+            volume_config["secret"] = {"name": secret_name, "files": files}
+        else:
+            volume_config["files"] = files
+        self._volume_config.append(volume_config)
 
     def add_command(self, command):
         self._command = command
@@ -275,6 +280,12 @@ class ContainerV3Builder:
     def add_envs(self, envs: dict):
         self._envs = {**self._envs, **envs}
 
+    def add_secret_envs(self, secret_name: str, envs: dict):
+        new_secret_envs = {
+            k: {"secret": {"name": secret_name, "key": v}} for k, v in envs.items()
+        }
+        self._envs = {**self._envs, **new_secret_envs}
+
     def build(self):
         container = {
             "name": self.name,
@@ -296,6 +307,69 @@ class ContainerV3Builder:
         return container
 
 
+class PodRestartPolicy:
+    """
+    Class that expresses which fields of the pod spec should force a pod restart
+
+    At the moment, only secrets can force restart the pod. More parts of the pod
+    can be added to the PodRestartPolicy while we need them.
+    """
+
+    default_policy = {
+        "kubernetesResources": {
+            "secrets": False,
+        },
+    }
+
+    def add_secrets(self, secret_names: Set[str] = None) -> NoReturn:
+        """
+        Add secrets to the restart policy
+
+        :param: secret_names: Set of secrets that will cause a force restart of the pod.
+                              The set should include the name of the secrets.
+                              If no secret_names are specified, all the secret will force
+                              the restart of the pod
+        """
+        self.default_policy["kubernetesResources"]["secrets"] = (
+            secret_names if secret_names else True
+        )
+
+    def _find_resources_with_name(
+        self, resources: Dict, resources_names: Set[str]
+    ) -> List[Any]:
+        resources_found = []
+        for name in resources_names:
+            resource = find_in_list_with_key(resources, key="name", value=name)
+            if resource:
+                resources_found.append(resource)
+        return resources_found
+
+    def policy_hash(self, pod_spec: Dict) -> str:
+        """
+        Return a hash of the Pod Spec taking into account the current policy.
+        This means that for the hash, only the data included in the policy will be added
+
+        :param: pod_spec: Pod spec
+        """
+        spec = pod_spec.copy()
+        policy_spec = {"kubernetesResources": {}}
+
+        for resource_type, resource_names in self.default_policy[
+            "kubernetesResources"
+        ].items():
+            if resource_names is True:
+                policy_spec["kubernetesResources"][resource_type] = spec[
+                    "kubernetesResources"
+                ][resource_type]
+            elif resource_names is not False:
+                resources_found = self._find_resources_with_name(
+                    spec["kubernetesResources"][resource_type], resource_names
+                )
+                if resources_found:
+                    policy_spec["kubernetesResources"][resource_type] = resources_found
+        return hash_from_dict(policy_spec)
+
+
 class PodSpecV3Builder:
     def __init__(self):
         self._init_containers = []
@@ -307,6 +381,7 @@ class PodSpecV3Builder:
             "fsGroup": 1000,
         }
         self._secrets = []
+        self._restart_policy = None
 
     @property
     def containers(self):
@@ -359,6 +434,9 @@ class PodSpecV3Builder:
     def set_security_context_fs_group(self, fs_group: int):
         self._security_context.update({"fsGroup": fs_group})
 
+    def set_restart_policy(self, restart_policy: PodRestartPolicy):
+        self._restart_policy = restart_policy
+
     def add_secret(
         self, name: str, content: Dict, base64_encoded: bool = False, type="Opaque"
     ):
@@ -383,4 +461,9 @@ class PodSpecV3Builder:
         )
 
     def build(self):
+        pod_spec = self.pod_spec
+        if self._restart_policy:
+            policy_hash = self._restart_policy.policy_hash(pod_spec)
+            for container in pod_spec["containers"]:
+                container["envConfig"]["policyHash"] = policy_hash
         return self.pod_spec
