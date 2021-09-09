@@ -26,26 +26,25 @@ class MysqlModel(ModelValidator):
 
     @validator("mysql_uri")
     def validate_mysql_uri(cls, v):
-        if v:
-            cls.mysql_data = MysqlModel._extract_data_from_uri(v)
+        cls.mysql_data = MysqlModel._extract_data_from_uri(v) if v else {}
         return v
 
     @property
     def host(cls):
-        return cls.mysql_data["host"]
+        return cls.mysql_data.get("host")
 
     @property
     def port(cls):
-        return int(cls.mysql_data["port"])
+        return int(cls.mysql_data.get("port")) if cls.mysql_data else None
 
     @property
     def username(cls):
-        return cls.mysql_data["username"]
+        return cls.mysql_data.get("username")
 
     @property
     def password(cls):
-        return cls.mysql_data["password"]
+        return cls.mysql_data.get("password")
 
     @property
     def database(cls):
-        return cls.mysql_data["database"]
+        return cls.mysql_data.get("database")
