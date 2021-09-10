@@ -19,7 +19,7 @@ class MongoClient(BaseRelationClient):
         if self.is_opts():
             replica_set_uri = self.get_data_from_unit("replica_set_uri")
             replica_set_name = self.get_data_from_unit("replica_set_name")
-            return f'{replica_set_uri}?replicaSet={replica_set_name}'
+            return f"{replica_set_uri}?replicaSet={replica_set_name}"
         else:
             return self.get_data_from_unit("connection_string")
 

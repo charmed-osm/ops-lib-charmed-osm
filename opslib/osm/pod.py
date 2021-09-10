@@ -163,7 +163,9 @@ class ContainerV3Builder:
     def add_command(self, command):
         self._command = command
 
-    def update_security_context(self, run_as_non_root: bool = True, privileged: bool = False):
+    def update_security_context(
+        self, run_as_non_root: bool = True, privileged: bool = False
+    ):
         self._security_context.update(
             {
                 "runAsNonRoot": run_as_non_root,
