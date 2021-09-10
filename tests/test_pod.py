@@ -4,6 +4,7 @@ from opslib.osm.pod import (
     IngressResourceV3Builder,
     FilesV3Builder,
     ContainerV3Builder,
+    PodRestartPolicy,
     PodSpecV3Builder,
 )
 
@@ -50,6 +51,22 @@ class TestPodSpecBuilder(unittest.TestCase):
         pod_spec_builder.add_container(container)
         pod_spec_builder.add_secret("secret-name", {"key": "value"})
         pod_spec_builder.add_ingress_resource(ingress_resource)
+        restart_policy = PodRestartPolicy()
+        restart_policy.add_secrets(secret_names=("secret-name"))
+        policy_hash = restart_policy.policy_hash(
+            {
+                "kubernetesResources": {
+                    "secrets": [
+                        {
+                            "name": "secret-name",
+                            "type": "Opaque",
+                            "stringData": {"key": "value"},
+                        }
+                    ],
+                },
+            }
+        )
+        pod_spec_builder.set_restart_policy(restart_policy)
         self.assertEqual(
             pod_spec_builder.build(),
             {
@@ -70,7 +87,7 @@ class TestPodSpecBuilder(unittest.TestCase):
                                 "protocol": "TCP",
                             }
                         ],
-                        "envConfig": {},
+                        "envConfig": {"policyHash": policy_hash},
                         "volumeConfig": [
                             {
                                 "name": "config",
@@ -110,6 +127,7 @@ class TestPodSpecBuilder(unittest.TestCase):
                         "securityContext": {
                             "runAsUser": 1000,
                             "runAsGroup": 1000,
+                            "fsGroup": 1000,
                         },
                     },
                     "ingressResources": [
@@ -154,3 +172,7 @@ class TestPodSpecBuilder(unittest.TestCase):
                 },
             },
         )
+
+
+if __name__ == "__main__":
+    unittest.main()

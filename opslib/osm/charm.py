@@ -23,7 +23,6 @@
 __all__ = ["CharmedOsmBase", "RelationsMissing"]
 
 
-import hashlib
 import json
 import logging
 from string import Template
@@ -43,6 +42,7 @@ from ops.model import (
 
 
 from .config.mysql import MysqlModel
+from .utils import hash_from_dict
 from .validator import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -104,6 +104,7 @@ class CharmedOsmBase(CharmBase):
         :params: debug_mode_config_key: Key in charm config for enabling debugging mode
         :params: debug_pubkey_config_key: Key in charm config for setting debugging public ssh key
         :params: vscode_workspace: VSCode workspace
+        :params: mysql_uri: indicates whether the charm has mysql_uri config or not
         """
         super().__init__(*args)
 
@@ -224,13 +225,8 @@ class CharmedOsmBase(CharmBase):
             self.unit.status = BlockedStatus(error_message)
 
     def _set_pod_spec(self, pod_spec: Dict[str, Any]) -> NoReturn:
-        pod_spec_hash = _hash_from_dict(pod_spec)
+        pod_spec_hash = hash_from_dict(pod_spec)
         if self.state.pod_spec != pod_spec_hash:
             self.model.pod.set_spec(pod_spec)
             self.state.pod_spec = pod_spec_hash
-
-
-def _hash_from_dict(dict: Dict[str, Any]) -> str:
-    dict_str = json.dumps(dict, sort_keys=True)
-    result = hashlib.md5(dict_str.encode())
-    return result.hexdigest()
+            logger.debug(f"applying pod spec with hash {pod_spec_hash}")
