@@ -108,12 +108,26 @@ class FilesV3Builder:
 
 
 class ContainerV3Builder:
-    def __init__(self, name, image_info, image_pull_policy="Always"):
+    def __init__(
+        self,
+        name,
+        image_info,
+        image_pull_policy="Always",
+        run_as_non_root: bool = False,
+    ):
+        """
+        :param: name: Name of the container
+        :param: image_info: OCI image information
+        :param: image_pull_policy: Image pull policy
+        :param: run_as_non_root: Boolean to indicate whether to run the container
+                                 as root or not. If True, will run as non-root,
+                                 if False, will run as root. Default=False.
+        """
         self.name = name
         self.image_info = image_info
         self.image_pull_policy = image_pull_policy
         self._security_context = {
-            "runAsNonRoot": True,
+            "runAsNonRoot": run_as_non_root,
             "privileged": False,
         }
         self._readiness_probe = {}
@@ -371,15 +385,24 @@ class PodRestartPolicy:
 
 
 class PodSpecV3Builder:
-    def __init__(self):
+    def __init__(self, enable_security_context: bool = False):
+        """
+        :param: enable_security_context: Enable security context if True, disable it if False
+                                         If True, user/group/fsgroup id 1000 will be used and
+                                         container won't run as root user.
+        """
         self._init_containers = []
         self._containers = []
         self._ingress_resources = []
-        self._security_context = {
-            "runAsUser": 1000,
-            "runAsGroup": 1000,
-            "fsGroup": 1000,
-        }
+        self._security_context = (
+            {
+                "runAsUser": 1000,
+                "runAsGroup": 1000,
+                "fsGroup": 1000,
+            }
+            if enable_security_context
+            else {}
+        )
         self._secrets = []
         self._restart_policy = None
 

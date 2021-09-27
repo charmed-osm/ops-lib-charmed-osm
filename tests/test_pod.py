@@ -29,7 +29,7 @@ class TestPodSpecBuilder(unittest.TestCase):
         files = files_builder.build()
         command = ["/bin/prometheus"]
 
-        container_builder = ContainerV3Builder(app_name, image_info)
+        container_builder = ContainerV3Builder(app_name, image_info, run_as_non_root=True)
         container_builder.add_port(name=app_name, port=port)
         container_builder.add_http_readiness_probe("/-/ready", port)
         container_builder.add_http_liveness_probe("/-/healthy", port)
@@ -47,7 +47,7 @@ class TestPodSpecBuilder(unittest.TestCase):
         ingress_resource_builder.add_rule(hostname, app_name, port)
 
         ingress_resource = ingress_resource_builder.build()
-        pod_spec_builder = PodSpecV3Builder()
+        pod_spec_builder = PodSpecV3Builder(enable_security_context=True)
         pod_spec_builder.add_container(container)
         pod_spec_builder.add_secret("secret-name", {"key": "value"})
         pod_spec_builder.add_ingress_resource(ingress_resource)
