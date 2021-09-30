@@ -201,9 +201,14 @@ class ContainerV3Builder:
         period_seconds=10,
         success_threshold=1,
         failure_threshold=3,
+        http_headers=[],
     ):
         self._readiness_probe = self._http_probe(
-            path, port, initial_delay_seconds, timeout_seconds
+            path,
+            port,
+            initial_delay_seconds,
+            timeout_seconds,
+            http_headers=http_headers,
         )
 
     def add_http_liveness_probe(
@@ -215,9 +220,14 @@ class ContainerV3Builder:
         period_seconds=10,
         success_threshold=1,
         failure_threshold=3,
+        http_headers=[],
     ):
         self._liveness_probe = self._http_probe(
-            path, port, initial_delay_seconds, timeout_seconds
+            path,
+            port,
+            initial_delay_seconds,
+            timeout_seconds,
+            http_headers=http_headers,
         )
 
     def _http_probe(
@@ -229,8 +239,9 @@ class ContainerV3Builder:
         period_seconds=10,
         success_threshold=1,
         failure_threshold=3,
+        http_headers=[],
     ):
-        return {
+        http_probe = {
             "httpGet": {
                 "path": path,
                 "port": port,
@@ -241,6 +252,13 @@ class ContainerV3Builder:
             "failureThreshold": failure_threshold,
             "periodSeconds": period_seconds,
         }
+        if http_headers:
+            http_probe["httpGet"]["httpHeaders"] = []
+            for name, value in http_headers:
+                http_probe["httpGet"]["httpHeaders"].append(
+                    {"name": name, "value": value}
+                )
+        return http_probe
 
     def add_tcpsocket_readiness_probe(
         self,
