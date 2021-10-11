@@ -39,11 +39,21 @@ class PrometheusServer(ops.framework.Object):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
 
-    def publish_info(self, hostname: str, port: int = 9091):
+    def publish_info(
+        self,
+        hostname: str,
+        port: int = 9091,
+        user: str = None,
+        password: str = None,
+    ):
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
                 relation.data[self.framework.model.app]["hostname"] = hostname
                 relation.data[self.framework.model.app]["port"] = str(port)
+                if user:
+                    relation.data[self.framework.model.app]["user"] = user
+                if password:
+                    relation.data[self.framework.model.app]["password"] = password
 
 
 class PrometheusClient(BaseRelationClient):
@@ -61,6 +71,14 @@ class PrometheusClient(BaseRelationClient):
     @property
     def port(self):
         return self.get_data_from_app("port")
+
+    @property
+    def user(self):
+        return self.get_data_from_app("user")
+
+    @property
+    def password(self):
+        return self.get_data_from_app("password")
 
 
 class PrometheusScrapeTarget(ops.framework.Object):
