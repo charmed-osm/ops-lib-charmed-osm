@@ -47,7 +47,7 @@ from .validator import ValidationError
 
 logger = logging.getLogger(__name__)
 
-DEBUG_SCRIPT = """#!/bin/bash
+DEBUG_SCRIPT = r"""#!/bin/bash
 PUBLIC_KEY_CONTENT="$pubkey"
 DEBIAN_FRONTEND=noninteractive  apt update && apt install ssh -y
 cat /etc/ssh/sshd_config |
@@ -71,10 +71,16 @@ grep OSM /root/.bashrc || (
 echo "[[ \`which code\` &&  
 ! \`ls /root/.vscode-server/extensions/ | grep ms-python.python\` ]] && 
 code --install-extension ms-python.python" | tee -a /root/.bashrc
+$hostpath_script
 cat << EOF > /root/debug.code-workspace
 $vscode_workspace
 EOF
 sleep infinity"""
+
+HOSTPATH_SCRIPT_TEMPLATE = """
+rm -rf $container_module_path
+ln -s /hostpath/$module_name/$module_subfolder $container_module_path
+"""
 
 
 class RelationsMissing(Exception):
@@ -94,9 +100,10 @@ class CharmedOsmBase(CharmBase):
     def __init__(
         self,
         *args,
-        oci_image="image",
-        debug_mode_config_key=None,
-        debug_pubkey_config_key=None,
+        oci_image: str = "image",
+        debug_mode_config_key: str = None,
+        debug_pubkey_config_key: str = None,
+        debug_host_paths: Dict = {},
         vscode_workspace: Dict = {},
         mysql_uri: bool = False,
     ) -> NoReturn:
@@ -118,6 +125,7 @@ class CharmedOsmBase(CharmBase):
         self.debugging_supported = debug_mode_config_key and debug_pubkey_config_key
         self.debug_mode_config_key = debug_mode_config_key
         self.debug_pubkey_config_key = debug_pubkey_config_key
+        self.debug_host_paths = debug_host_paths
         self.vscode_workspace = vscode_workspace
         self.mysql_uri = mysql_uri
 
@@ -136,6 +144,18 @@ class CharmedOsmBase(CharmBase):
                         with mysql_uri=True.
         """
         raise NotImplementedError("build_pod_spec is not implemented")
+
+    def _get_hostpath_script(self) -> str:
+        script = ""
+        for module_name, hostpath_item in self.debug_host_paths.items():
+            hostpath_folder = self.config.get(hostpath_item["hostpath-config"])
+            if hostpath_folder:
+                script += Template(HOSTPATH_SCRIPT_TEMPLATE).substitute(
+                    container_module_path=hostpath_item["container-path"],
+                    module_name=module_name,
+                    module_subfolder=hostpath_item["container-path"].split("/")[-1],
+                )
+        return script
 
     def _debug(self, pod_spec: Dict) -> NoReturn:
         """
@@ -156,6 +176,7 @@ class CharmedOsmBase(CharmBase):
                 "protocol": "TCP",
             }
         )
+        hostpath_script = self._get_hostpath_script()
         container["volumeConfig"].append(
             {
                 "name": "scripts",
@@ -165,6 +186,7 @@ class CharmedOsmBase(CharmBase):
                         "path": "debug.sh",
                         "content": Template(DEBUG_SCRIPT).substitute(
                             pubkey=self.config[self.debug_pubkey_config_key],
+                            hostpath_script=hostpath_script,
                             vscode_workspace=json.dumps(
                                 self.vscode_workspace,
                                 sort_keys=True,
@@ -177,6 +199,16 @@ class CharmedOsmBase(CharmBase):
                 ],
             }
         )
+        for folder_name, hostpath_item in self.debug_host_paths.items():
+            hostpath_folder = self.config.get(hostpath_item["hostpath-config"])
+            if hostpath_folder:
+                container["volumeConfig"].append(
+                    {
+                        "name": f'{folder_name.replace("_", "-")}-hostpath'.lower(),
+                        "mountPath": f"/hostpath/{folder_name}",
+                        "hostPath": {"path": hostpath_folder, "type": "Directory"},
+                    }
+                )
         container["command"] = ["/osm-debug-scripts/debug.sh"]
 
     def _debug_if_needed(self, pod_spec):
