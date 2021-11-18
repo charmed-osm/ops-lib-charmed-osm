@@ -64,8 +64,8 @@ grep OSM /root/.bashrc || (
     env |
     grep OSM |
     sed -e 's/^/export /' |
-    sed -e 's/$$/\\\"/' |
-    sed -e 's/=/=\\\"/' |
+    sed -e 's/$$/\"/' |
+    sed -e 's/=/=\"/' |
     tee -a /root/.bashrc
 )
 echo "[[ \`which code\` &&  
