@@ -68,6 +68,9 @@ grep OSM /root/.bashrc || (
     sed -e 's/=/=\\\"/' |
     tee -a /root/.bashrc
 )
+echo "[[ \`which code\` &&  
+! \`ls /root/.vscode-server/extensions/ | grep ms-python.python\` ]] && 
+code --install-extension ms-python.python" | tee -a /root/.bashrc
 cat << EOF > /root/debug.code-workspace
 $vscode_workspace
 EOF
