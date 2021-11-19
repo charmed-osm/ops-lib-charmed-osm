@@ -101,9 +101,6 @@ class CharmedOsmBase(CharmBase):
         self,
         *args,
         oci_image: str = "image",
-        debug_mode_config_key: str = None,
-        debug_pubkey_config_key: str = None,
-        debug_host_paths: Dict = {},
         vscode_workspace: Dict = {},
         mysql_uri: bool = False,
     ) -> NoReturn:
@@ -111,8 +108,6 @@ class CharmedOsmBase(CharmBase):
         CharmedOsmBase Charm constructor
 
         :params: oci_image: Resource name for main OCI image
-        :params: debug_mode_config_key: Key in charm config for enabling debugging mode
-        :params: debug_pubkey_config_key: Key in charm config for setting debugging public ssh key
         :params: vscode_workspace: VSCode workspace
         :params: mysql_uri: indicates whether the charm has mysql_uri config or not
         """
@@ -122,10 +117,8 @@ class CharmedOsmBase(CharmBase):
         self.state.set_default(pod_spec=None)
 
         self.image = OCIImageResource(self, oci_image)
-        self.debugging_supported = debug_mode_config_key and debug_pubkey_config_key
-        self.debug_mode_config_key = debug_mode_config_key
-        self.debug_pubkey_config_key = debug_pubkey_config_key
-        self.debug_host_paths = debug_host_paths
+        self.debug_mode_enabled = False
+        self.debug_pubkey = None
         self.vscode_workspace = vscode_workspace
         self.mysql_uri = mysql_uri
 
@@ -147,8 +140,8 @@ class CharmedOsmBase(CharmBase):
 
     def _get_hostpath_script(self) -> str:
         script = ""
-        for module_name, hostpath_item in self.debug_host_paths.items():
-            hostpath_folder = self.config.get(hostpath_item["hostpath-config"])
+        for module_name, hostpath_item in self.debug_hostpaths.items():
+            hostpath_folder = hostpath_item["hostpath"]
             if hostpath_folder:
                 script += Template(HOSTPATH_SCRIPT_TEMPLATE).substitute(
                     container_module_path=hostpath_item["container-path"],
@@ -156,6 +149,19 @@ class CharmedOsmBase(CharmBase):
                     module_subfolder=hostpath_item["container-path"].split("/")[-1],
                 )
         return script
+
+    def enable_debug_mode(self, pubkey: str, hostpaths: Dict[str, Any]) -> None:
+        """Enable debug mode.
+
+        Args:
+            pubkey: Public key to inject into the container for debugging.
+            hostpaths: |
+                Dictionary with the host paths for the components that need
+                to be mounted to the container.
+        """
+        self.debug_mode_enabled = True
+        self.debug_pubkey = pubkey
+        self.debug_hostpaths = hostpaths
 
     def _debug(self, pod_spec: Dict) -> NoReturn:
         """
@@ -185,7 +191,7 @@ class CharmedOsmBase(CharmBase):
                     {
                         "path": "debug.sh",
                         "content": Template(DEBUG_SCRIPT).substitute(
-                            pubkey=self.config[self.debug_pubkey_config_key],
+                            pubkey=self.debug_pubkey,
                             hostpath_script=hostpath_script,
                             vscode_workspace=json.dumps(
                                 self.vscode_workspace,
@@ -199,8 +205,8 @@ class CharmedOsmBase(CharmBase):
                 ],
             }
         )
-        for folder_name, hostpath_item in self.debug_host_paths.items():
-            hostpath_folder = self.config.get(hostpath_item["hostpath-config"])
+        for folder_name, hostpath_item in self.debug_hostpaths.items():
+            hostpath_folder = hostpath_item["hostpath"]
             if hostpath_folder:
                 container["volumeConfig"].append(
                     {
@@ -217,8 +223,8 @@ class CharmedOsmBase(CharmBase):
 
         :params: pod_spec: Pod Spec to be debugged.
         """
-        if self.debugging_supported and self.config[self.debug_mode_config_key]:
-            if self.debug_pubkey_config_key not in self.config:
+        if self.debug_mode_enabled:
+            if not self.debug_pubkey:
                 raise Exception("debug_pubkey config is not set")
             self._debug(pod_spec)
 
