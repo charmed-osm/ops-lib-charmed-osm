@@ -32,7 +32,14 @@ class HttpServer(ops.framework.Object):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
 
-    def publish_info(self, host: str, port: int, path: str = None, basic_auth_username: str = None, basic_auth_password: str = None):
+    def publish_info(
+        self,
+        host: str,
+        port: int,
+        path: str = None,
+        basic_auth_username: str = None,
+        basic_auth_password: str = None,
+    ):
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
                 relation_data = relation.data[self.framework.model.app]
@@ -58,7 +65,7 @@ class HttpClient(BaseRelationClient):
     @property
     def port(self):
         return self.get_data_from_app("port")
-    
+
     @property
     def path(self):
         return self.get_data_from_app("path")
@@ -66,7 +73,7 @@ class HttpClient(BaseRelationClient):
     @property
     def basic_auth_username(self):
         return self.get_data_from_app("basic_auth_username")
-    
+
     @property
     def basic_auth_password(self):
         return self.get_data_from_app("basic_auth_password")
