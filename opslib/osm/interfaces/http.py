@@ -15,11 +15,6 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""
-MySQL endpoint implementation for the Operator Framework.
-Ported to the Operator Framework from the canonical-osm Reactive
-charms at https://git.launchpad.net/canonical-osm
-"""
 
 import ops.charm
 import ops.framework
@@ -37,12 +32,22 @@ class HttpServer(ops.framework.Object):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
 
-    def publish_info(self, host: str, port: int):
+    def publish_info(
+        self,
+        host: str,
+        port: int,
+        path: str = None,
+        basic_auth_username: str = None,
+        basic_auth_password: str = None,
+    ):
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
                 relation_data = relation.data[self.framework.model.app]
                 relation_data["host"] = str(host)
                 relation_data["port"] = str(port)
+                relation_data["path"] = str(path)
+                relation_data["basic_auth_username"] = str(basic_auth_username)
+                relation_data["basic_auth_password"] = str(basic_auth_password)
 
 
 class HttpClient(BaseRelationClient):
@@ -60,3 +65,15 @@ class HttpClient(BaseRelationClient):
     @property
     def port(self):
         return self.get_data_from_app("port")
+
+    @property
+    def path(self):
+        return self.get_data_from_app("path")
+
+    @property
+    def basic_auth_username(self):
+        return self.get_data_from_app("basic_auth_username")
+
+    @property
+    def basic_auth_password(self):
+        return self.get_data_from_app("basic_auth_password")
