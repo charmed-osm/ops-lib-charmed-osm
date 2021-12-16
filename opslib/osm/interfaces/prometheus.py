@@ -99,16 +99,23 @@ class PrometheusScrapeTarget(ops.framework.Object):
         scrape_timeout: str,
     ) -> NoReturn:
         if self.framework.model.unit.is_leader():
+            # Write the relation data in both app and unit data.
+            # This way we make sure it will work with https://code.launchpad.net/charm-prometheus2.
+            relation_data_targets = [
+                self.framework.model.app,
+                self.framework.model.unit,
+            ]
             for relation in self.framework.model.relations[self.relation_name]:
-                relation.data[self.framework.model.app]["hostname"] = hostname
-                relation.data[self.framework.model.app]["port"] = port
-                relation.data[self.framework.model.app]["metrics_path"] = metrics_path
-                relation.data[self.framework.model.app][
-                    "scrape_interval"
-                ] = scrape_interval
-                relation.data[self.framework.model.app][
-                    "scrape_timeout"
-                ] = scrape_timeout
+                for relation_data_target in relation_data_targets:
+                    relation.data[relation_data_target]["hostname"] = hostname
+                    relation.data[relation_data_target]["port"] = port
+                    relation.data[relation_data_target]["metrics_path"] = metrics_path
+                    relation.data[relation_data_target][
+                        "scrape_interval"
+                    ] = scrape_interval
+                    relation.data[relation_data_target][
+                        "scrape_timeout"
+                    ] = scrape_timeout
 
 
 class PrometheusScrapeServer(BaseRelationClient):
