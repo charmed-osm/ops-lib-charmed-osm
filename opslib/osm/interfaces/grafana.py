@@ -39,11 +39,7 @@ class GrafanaDashboardTarget(ops.framework.Object):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
 
-    def publish_info(
-        self,
-        name: str,
-        dashboard: str,
-    ) -> NoReturn:
+    def publish_info(self, name: str, dashboard: str) -> NoReturn:
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
                 relation.data[self.framework.model.app]["name"] = name

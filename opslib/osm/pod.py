@@ -60,7 +60,7 @@ class IngressResourceV3Builder:
             r["spec"]["tls"] = self.tls
         return r
 
-    def add_rule(self, hostname: str, service_name, path_type, port, path: str = "/",):
+    def add_rule(self, hostname: str, service_name, path_type, port, path: str = "/"):
         # This function only supports one path per rule for simplicity
         self._rules.append(
             {
@@ -73,10 +73,8 @@ class IngressResourceV3Builder:
                             "backend": {
                                 "service": {
                                     "name": service_name,
-                                    "port": {
-                                        "number": port,
-                                    },
-                                },
+                                    "port": {"number": port},
+                                }
                             },
                         }
                     ]
@@ -131,10 +129,7 @@ class ContainerV3Builder:
         self.name = name
         self.image_info = image_info
         self.image_pull_policy = image_pull_policy
-        self._security_context = {
-            "runAsNonRoot": run_as_non_root,
-            "privileged": False,
-        }
+        self._security_context = {"runAsNonRoot": run_as_non_root, "privileged": False}
         self._readiness_probe = {}
         self._liveness_probe = {}
         self._volume_config = []
@@ -174,10 +169,7 @@ class ContainerV3Builder:
         self._ports.append({"name": name, "containerPort": port, "protocol": protocol})
 
     def add_volume_config(self, name, mount_path, files, secret_name: str = None):
-        volume_config = {
-            "name": name,
-            "mountPath": mount_path,
-        }
+        volume_config = {"name": name, "mountPath": mount_path}
         if secret_name:
             volume_config["secret"] = {"name": secret_name, "files": files}
         else:
@@ -191,10 +183,7 @@ class ContainerV3Builder:
         self, run_as_non_root: bool = True, privileged: bool = False
     ):
         self._security_context.update(
-            {
-                "runAsNonRoot": run_as_non_root,
-                "privileged": privileged,
-            }
+            {"runAsNonRoot": run_as_non_root, "privileged": privileged}
         )
 
     def add_http_readiness_probe(
@@ -247,10 +236,7 @@ class ContainerV3Builder:
         http_headers=[],
     ):
         http_probe = {
-            "httpGet": {
-                "path": path,
-                "port": port,
-            },
+            "httpGet": {"path": path, "port": port},
             "initialDelaySeconds": initial_delay_seconds,
             "timeoutSeconds": timeout_seconds,
             "successThreshold": success_threshold,
@@ -301,9 +287,7 @@ class ContainerV3Builder:
         failure_threshold=3,
     ):
         return {
-            "tcpSocket": {
-                "port": port,
-            },
+            "tcpSocket": {"port": port},
             "initialDelaySeconds": initial_delay_seconds,
             "timeoutSeconds": timeout_seconds,
             "successThreshold": success_threshold,
@@ -331,9 +315,7 @@ class ContainerV3Builder:
             "ports": self.ports,
             "envConfig": self.env_config,
             "volumeConfig": self.volume_config,
-            "kubernetes": {
-                "securityContext": self.security_context,
-            },
+            "kubernetes": {"securityContext": self.security_context},
         }
         if self.command:
             container["command"] = self.command
@@ -352,11 +334,7 @@ class PodRestartPolicy:
     can be added to the PodRestartPolicy while we need them.
     """
 
-    default_policy = {
-        "kubernetesResources": {
-            "secrets": False,
-        },
-    }
+    default_policy = {"kubernetesResources": {"secrets": False}}
 
     def add_secrets(self, secret_names: Set[str] = None) -> NoReturn:
         """
@@ -418,11 +396,7 @@ class PodSpecV3Builder:
         self._containers = []
         self._ingress_resources = []
         self._security_context = (
-            {
-                "runAsUser": 1000,
-                "runAsGroup": 1000,
-                "fsGroup": 1000,
-            }
+            {"runAsUser": 1000, "runAsGroup": 1000, "fsGroup": 1000}
             if enable_security_context
             else {}
         )

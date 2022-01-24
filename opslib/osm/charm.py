@@ -33,12 +33,7 @@ from typing import Any, Dict, NoReturn
 from oci_image import OCIImageResource, OCIImageResourceError
 from ops.charm import CharmBase
 from ops.framework import StoredState
-from ops.model import (
-    ActiveStatus,
-    BlockedStatus,
-    MaintenanceStatus,
-    ModelError,
-)
+from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, ModelError
 
 
 from .config.mysql import MysqlModel
@@ -176,11 +171,7 @@ class CharmedOsmBase(CharmBase):
         if "livenessProbe" in container["kubernetes"]:
             container["kubernetes"].pop("livenessProbe")
         container["ports"].append(
-            {
-                "name": "ssh",
-                "containerPort": 22,
-                "protocol": "TCP",
-            }
+            {"name": "ssh", "containerPort": 22, "protocol": "TCP"}
         )
         hostpath_script = self._get_hostpath_script()
         container["volumeConfig"].append(

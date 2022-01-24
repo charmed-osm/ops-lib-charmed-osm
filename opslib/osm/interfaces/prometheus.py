@@ -40,11 +40,7 @@ class PrometheusServer(ops.framework.Object):
         self.relation_name = relation_name
 
     def publish_info(
-        self,
-        hostname: str,
-        port: int = 9091,
-        user: str = None,
-        password: str = None,
+        self, hostname: str, port: int = 9091, user: str = None, password: str = None
     ):
         if self.framework.model.unit.is_leader():
             for relation in self.framework.model.relations[self.relation_name]:
