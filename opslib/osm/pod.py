@@ -60,7 +60,7 @@ class IngressResourceV3Builder:
             r["spec"]["tls"] = self.tls
         return r
 
-    def add_rule(self, hostname: str, service_name, port, path: str = "/"):
+    def add_rule(self, hostname: str, service_name, path_type, port, path: str = "/",):
         # This function only supports one path per rule for simplicity
         self._rules.append(
             {
@@ -69,9 +69,14 @@ class IngressResourceV3Builder:
                     "paths": [
                         {
                             "path": path,
+                            "pathType": path_type,
                             "backend": {
-                                "serviceName": service_name,
-                                "servicePort": port,
+                                "service": {
+                                    "name": service_name,
+                                    "port": {
+                                        "number": port,
+                                    },
+                                },
                             },
                         }
                     ]
