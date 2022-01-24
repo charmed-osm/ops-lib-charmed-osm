@@ -15,6 +15,7 @@ class TestPodSpecBuilder(unittest.TestCase):
     def test_all_success(self):
         app_name = "prometheus"
         hostname = "hostname"
+        pathtype = "Prefix"
         port = 9090
         image_info = {
             "imagePath": "registrypath",
@@ -46,7 +47,7 @@ class TestPodSpecBuilder(unittest.TestCase):
         )
 
         ingress_resource_builder.add_tls([hostname], "tls_secret_name")
-        ingress_resource_builder.add_rule(hostname, app_name, port)
+        ingress_resource_builder.add_rule(hostname, app_name, pathtype, port)
 
         ingress_resource = ingress_resource_builder.build()
         pod_spec_builder = PodSpecV3Builder(enable_security_context=True)
@@ -146,9 +147,14 @@ class TestPodSpecBuilder(unittest.TestCase):
                                             "paths": [
                                                 {
                                                     "path": "/",
+                                                    "pathType": "Prefix",
                                                     "backend": {
-                                                        "serviceName": "prometheus",
-                                                        "servicePort": 9090,
+                                                        "service": {
+                                                            "name": "prometheus",
+                                                            "port": {
+                                                                "number": 9090
+                                                            },
+                                                        },
                                                     },
                                                 }
                                             ]
