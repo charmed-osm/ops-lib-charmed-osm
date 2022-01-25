@@ -47,7 +47,7 @@ class TestPodSpecBuilder(unittest.TestCase):
         )
 
         ingress_resource_builder.add_tls([hostname], "tls_secret_name")
-        ingress_resource_builder.add_rule(hostname, app_name, pathtype, port)
+        ingress_resource_builder.add_rule(hostname, app_name, port, pathtype)
 
         ingress_resource = ingress_resource_builder.build()
         pod_spec_builder = PodSpecV3Builder(enable_security_context=True)
