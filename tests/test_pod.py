@@ -34,7 +34,9 @@ class TestPodSpecBuilder(unittest.TestCase):
         )
         container_builder.add_port(name=app_name, port=port)
         container_builder.add_http_readiness_probe("/-/ready", port)
-        container_builder.add_http_liveness_probe("/-/healthy", port)
+        container_builder.add_http_liveness_probe(
+            "/-/healthy", port, failure_threshold=7
+        )
         container_builder.add_command(command)
         container_builder.add_volume_config("config", "/etc/prometheus", files)
         container = container_builder.build()
@@ -117,7 +119,7 @@ class TestPodSpecBuilder(unittest.TestCase):
                                 "initialDelaySeconds": 0,
                                 "timeoutSeconds": 1,
                                 "successThreshold": 1,
-                                "failureThreshold": 3,
+                                "failureThreshold": 7,
                                 "periodSeconds": 10,
                             },
                         },
