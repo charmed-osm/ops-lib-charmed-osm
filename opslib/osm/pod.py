@@ -208,7 +208,10 @@ class ContainerV3Builder:
             port,
             initial_delay_seconds,
             timeout_seconds,
-            http_headers=http_headers,
+            period_seconds,
+            success_threshold,
+            failure_threshold,
+            http_headers,
         )
 
     def add_http_liveness_probe(
@@ -227,7 +230,10 @@ class ContainerV3Builder:
             port,
             initial_delay_seconds,
             timeout_seconds,
-            http_headers=http_headers,
+            period_seconds,
+            success_threshold,
+            failure_threshold,
+            http_headers,
         )
 
     def _http_probe(
@@ -270,7 +276,12 @@ class ContainerV3Builder:
         failure_threshold=3,
     ):
         self._readiness_probe = self._tcpsocket_probe(
-            port, initial_delay_seconds, timeout_seconds
+            port,
+            initial_delay_seconds,
+            timeout_seconds,
+            period_seconds,
+            success_threshold,
+            failure_threshold,
         )
 
     def add_tcpsocket_liveness_probe(
@@ -283,7 +294,12 @@ class ContainerV3Builder:
         failure_threshold=3,
     ):
         self._liveness_probe = self._tcpsocket_probe(
-            port, initial_delay_seconds, timeout_seconds
+            port,
+            initial_delay_seconds,
+            timeout_seconds,
+            period_seconds,
+            success_threshold,
+            failure_threshold,
         )
 
     def _tcpsocket_probe(
